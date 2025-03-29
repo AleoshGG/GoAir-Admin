@@ -12,6 +12,6 @@ func NewCreatePlace(db repository.IAdmin) *CreatePlace {
 	return &CreatePlace{db: db}
 }
 
-func (uc CreatePlace) Run(name string, id_user int) (uint, error) {
-	return uc.db.CreatePlace(name, id_user)
+func (uc CreatePlace) Run(name string, id_user int, id_application int) (uint, error) {
+	return uc.db.CreatePlace(name, id_user, id_application)
 }

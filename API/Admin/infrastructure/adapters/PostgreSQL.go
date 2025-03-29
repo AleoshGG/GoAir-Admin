@@ -49,25 +49,6 @@ func (postgres *PostgreSQL) GetAdmin() entities.Admin {
 	return admin
 }
 
-func (postgres *PostgreSQL) CreatePlace(name string, id_user int) (uint, error){
-	query := "INSERT INTO places (name, id_user) VALUES ($1, $2) RETURNING id_place"
-
-	var id uint
-	err := postgres.conn.DB.QueryRow(query, name, id_user).Scan(&id)
-
-	if err != nil {
-		fmt.Println("Error al ejecutar la consulta 1: %v", err)
-		return 0, err
-	}
-
-	if err = postgres.CreateId(int(id)); err != nil {
-		fmt.Println("Error: %v", err)
-		return 0, err
-	} 
-
-	return id, nil
-}
-
 func (postgres *PostgreSQL) SearchUser(last_name string) entities.User {
 	query := "SELECT * FROM users WHERE last_name LIKE '%' || $1 || '%'"
 	var user entities.User
@@ -92,6 +73,47 @@ func (postgres *PostgreSQL) SearchUser(last_name string) entities.User {
     }
 	fmt.Print(user)
 	return user
+}
+
+func (postgres *PostgreSQL) CreatePlace(name string, id_user int, id_application int) (uint, error){
+	query := "INSERT INTO places (name, id_user) VALUES ($1, $2) RETURNING id_place"
+
+	var id uint
+	err := postgres.conn.DB.QueryRow(query, name, id_user).Scan(&id)
+
+	if err != nil {
+		fmt.Println("Error al ejecutar la consulta 1: %v", err)
+		return 0, err
+	}
+
+	if err = postgres.CreateId(int(id)); err != nil {
+		fmt.Println("Error: %v", err)
+		return 0, err
+	} 
+
+	if err = changeStatusApplication(postgres, id_application); err != nil {
+		fmt.Println("Error al cambiar el estado: %v", err)
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func changeStatusApplication(p *PostgreSQL, id_application int) error {
+    query := "UPDATE applications SET status_application = 'pending' WHERE id_application = $1"
+    
+    result, err := p.conn.DB.Exec(query, id_application)
+    if err != nil {
+        return fmt.Errorf("error actualizando estado: %w", err)
+    }
+
+    // Verificar si realmente se actualizó algún registro
+    rowsAffected, _ := result.RowsAffected()
+    if rowsAffected == 0 {
+        return fmt.Errorf("ningún registro actualizado (id_application %d no existe)", id_application)
+    }
+
+    return nil
 }
 
 func (postgres *PostgreSQL) CreateId(id_place int) (error) {
@@ -215,4 +237,98 @@ func (postgres *PostgreSQL) DeletePlace(id_place int) (uint, error) {
 	}
 	
 	return uint(1), nil
+}
+
+func (postgres *PostgreSQL) GetApplicationByUser(id_user int) []entities.Application {
+	query := `SELECT * FROM applications WHERE id_user = $1 AND status_application != 'complete'`
+
+	var applications []entities.Application
+
+	rows, err := postgres.conn.DB.Query(query, id_user)
+
+	if err != nil {
+        fmt.Println("No se pudieron obtener los datos.", err)
+        return []entities.Application{}
+    }
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var a entities.Application
+		
+		// Escanear los valores de la fila
+		err := rows.Scan(&a.Id_application, &a.Status_application, &a.Id_user)
+		if err != nil {
+			// Manejar error al escanear la fila
+			fmt.Println("Error al escanear la fila:", err)
+			return []entities.Application{}
+		}
+		applications = append(applications, a)
+	}
+
+	// Verifica errores después de iterar
+    if err = rows.Err(); err != nil {
+        fmt.Println("Error al recorrer las filas:", err)
+        return nil
+    }
+
+	return applications
+}
+
+func (postgres *PostgreSQL) GetAllApplications() ([]entities.AllApplications) {
+	query := `SELECT (a.id_application, u.first_name, u.last_name, a.status_application, a.id_user) 
+			  FROM applications a
+			  INNER JOIN users u 
+			  ON a.id_user = u.id_user
+			  LIMIT 100`
+
+	var applications []entities.AllApplications
+
+	rows, err := postgres.conn.DB.Query(query)
+		  
+	if err != nil {
+		fmt.Println("No se pudieron obtener los datos.", err)
+		return []entities.AllApplications{}
+	}
+		  
+	defer rows.Close()
+		  
+	for rows.Next() {
+		var a entities.AllApplications
+				  
+		// Escanear los valores de la fila
+		err := rows.Scan(&a.Id_application, &a.First_name, &a.Last_name, &a.Status_application, &a.Id_user)
+		if err != nil {
+			// Manejar error al escanear la fila
+			fmt.Println("Error al escanear la fila:", err)
+			return []entities.AllApplications{}
+			}
+			applications = append(applications, a)
+		}
+		  
+		// Verifica errores después de iterar
+		if err = rows.Err(); err != nil {
+			fmt.Println("Error al recorrer las filas:", err)
+			return nil
+	}
+		  
+	return applications
+}
+
+func (postgres *PostgreSQL) ConfirmInstallation(id_application int) (error) {
+	query := "UPDATE applications SET status_application = 'complete' WHERE id_application = $1"
+	
+	result, err := postgres.conn.DB.Exec(query, id_application)
+
+	if err != nil {
+		fmt.Println("Error al ejecutar la consultaF: %v", err)
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+    if rowsAffected == 0 {
+        return fmt.Errorf("ningún registro actualizado (id_application %d no existe)", id_application)
+    }
+	
+	return nil
 }

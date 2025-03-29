@@ -26,6 +26,7 @@ func (cp_c *CreatePlaceController) CreatePlace(c *gin.Context) {
 	tokenString := c.GetHeader("Authorization")
 	var newPlace struct {
 		Id_user    int
+		Id_application int
 		Name string
 	}
 
@@ -51,7 +52,7 @@ func (cp_c *CreatePlaceController) CreatePlace(c *gin.Context) {
 		return
 	}
 
-	id_place, err := cp_c.app.Run(newPlace.Name, newPlace.Id_user) 
+	id_place, err := cp_c.app.Run(newPlace.Name, newPlace.Id_user, newPlace.Id_application) 
 	if err != nil {
 		c.JSON(400, gin.H{
 			"status": false,
