@@ -276,7 +276,7 @@ func (postgres *PostgreSQL) GetApplicationByUser(id_user int) []entities.Applica
 }
 
 func (postgres *PostgreSQL) GetAllApplications() ([]entities.AllApplications) {
-	query := `SELECT (a.id_application, u.first_name, u.last_name, a.status_application, a.id_user) 
+	query := `SELECT a.id_application, u.first_name, u.last_name, a.status_application, a.id_user
 			  FROM applications a
 			  INNER JOIN users u 
 			  ON a.id_user = u.id_user

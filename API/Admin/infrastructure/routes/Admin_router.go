@@ -17,7 +17,7 @@ func RegisterRouter(r *gin.Engine) {
 		adminRoutes.DELETE("/:id", controllers.NewDeletePlaceController().DeletePalce)
 		adminRoutes.GET("/apps/:id", controllers.NewGetApplicationByUser().GetApplicationByUser)
 		adminRoutes.GET("/apps", controllers.NewGetAllApplications().GetAllApplications)
-		adminRoutes.PUT("/confirm", controllers.NewConfirmInstallationController().ConfirmInstallation)
+		adminRoutes.PUT("/confirm/:id", controllers.NewConfirmInstallationController().ConfirmInstallation)
 	}
 }
 
