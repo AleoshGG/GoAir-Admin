@@ -12,6 +12,6 @@ func NewGetIds(db repository.IAdmin) *GetIds {
 	return &GetIds{db: db}
 }
 
-func (uc *GetIds) Run(id_place int) []entities.Sensor {
+func (uc *GetIds) Run(id_place int) ([]entities.Sensor, []entities.Device) {
 	return uc.db.GetIds(id_place)
 }

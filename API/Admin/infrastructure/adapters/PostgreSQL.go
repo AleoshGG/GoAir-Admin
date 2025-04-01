@@ -96,6 +96,8 @@ func (postgres *PostgreSQL) CreatePlace(name string, id_user int, id_application
 		return 0, err
 	}
 
+	defer postgres.conn.DB.Close()
+
 	return id, nil
 }
 
@@ -120,7 +122,9 @@ func (postgres *PostgreSQL) CreateId(id_place int) (error) {
 	id_mq135a := primitive.NewObjectID().Hex() 
 	id_mq135b := primitive.NewObjectID().Hex()  
 	id_dh11a := primitive.NewObjectID().Hex()  
-	id_dh11b := primitive.NewObjectID().Hex()  
+	id_dh11b := primitive.NewObjectID().Hex()
+	id_deviceA := primitive.NewObjectID().Hex() 
+	id_deviceB := primitive.NewObjectID().Hex() 
 
 	query := "INSERT INTO sensors (id_sensor, id_place, sensor_type, model) VALUES ($1,$2,$3,$4)"
 	_, err := postgres.conn.DB.Query(query, id_mq135a, id_place, "air_quality", "MQ135")
@@ -164,10 +168,24 @@ func (postgres *PostgreSQL) CreateId(id_place int) (error) {
 		return err
 	}
 
+	query = "INSERT INTO devices (id_device, id_place) VALUES ($1,$2)"
+	_, err = postgres.conn.DB.Query(query, id_deviceA, id_place)
+	if err != nil {
+		fmt.Println("Error al ejecutar la consultaF: %v", err)
+		return err
+	}
+
+	query = "INSERT INTO devices (id_device, id_place) VALUES ($1,$2)"
+	_, err = postgres.conn.DB.Query(query, id_deviceB, id_place)
+	if err != nil {
+		fmt.Println("Error al ejecutar la consultaF: %v", err)
+		return err
+	}
+
 	return nil
 }
 
-func (postgres *PostgreSQL) GetIds(id_place int) []entities.Sensor {
+func (postgres *PostgreSQL) GetIds(id_place int) ([]entities.Sensor, []entities.Device) {
 	query := "SELECT * FROM sensors WHERE id_place = $1"
 	var sensors []entities.Sensor
 
@@ -175,7 +193,7 @@ func (postgres *PostgreSQL) GetIds(id_place int) []entities.Sensor {
 
 	if err != nil {
         fmt.Println("No se pudieron obtener los datos.", err)
-        return []entities.Sensor{}
+        return []entities.Sensor{}, []entities.Device{}
     }
 
 	defer rows.Close()
@@ -186,8 +204,31 @@ func (postgres *PostgreSQL) GetIds(id_place int) []entities.Sensor {
 
 		sensors = append(sensors, s)
 	}
+	devices :=  getDevices(postgres, id_place)
+	return sensors, devices
+}
+
+func getDevices(postgres *PostgreSQL, id_place int) []entities.Device {
+	query := "SELECT * FROM devices WHERE id_place = $1"
+	var devices []entities.Device
+
+	rows, err := postgres.conn.DB.Query(query, id_place)
+
+	if err != nil {
+        fmt.Println("No se pudieron obtener los datos.", err)
+        return []entities.Device{}
+    }
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var d entities.Device
+		rows.Scan(&d.Id_device, &d.Id_place)
+
+		devices = append(devices, d)
+	}
 	
-	return sensors
+	return devices
 }
 
 func (postgres *PostgreSQL) GetPlaces(id_user int) []entities.Place {
@@ -230,6 +271,8 @@ func (postgres *PostgreSQL) DeletePlace(id_place int) (uint, error) {
 	query := "DELETE FROM places WHERE id_place = $1"
 	
 	_, err := postgres.conn.DB.Exec(query, id_place)
+
+	defer postgres.conn.DB.Close()
 
 	if err != nil {
 		fmt.Println("Error al ejecutar la consultaF: %v", err)
@@ -316,7 +359,7 @@ func (postgres *PostgreSQL) GetAllApplications() ([]entities.AllApplications) {
 }
 
 func (postgres *PostgreSQL) ConfirmInstallation(id_application int) (error) {
-	query := "UPDATE applications SET status_application = 'complete' WHERE id_application = $1"
+	query := "DELETE FROM applications WHERE id_application = $1"
 	
 	result, err := postgres.conn.DB.Exec(query, id_application)
 
@@ -329,6 +372,8 @@ func (postgres *PostgreSQL) ConfirmInstallation(id_application int) (error) {
     if rowsAffected == 0 {
         return fmt.Errorf("ningún registro actualizado (id_application %d no existe)", id_application)
     }
+
+	defer postgres.conn.DB.Close()
 	
 	return nil
 }

@@ -7,7 +7,7 @@ type IAdmin interface {
 	CreatePlace(name string, id_user int, id_application int) (uint, error)
 	SearchUser(last_name string) entities.User 
 	CreateId(id_place int) (error)
-	GetIds(id_place int) []entities.Sensor
+	GetIds(id_place int) ([]entities.Sensor, []entities.Device)
 	GetPlaces(id_user int) []entities.Place
 	DeletePlace(id_place int) (uint, error)
 	GetApplicationByUser(id_user int) []entities.Application

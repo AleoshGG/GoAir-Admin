@@ -43,7 +43,7 @@ func (gids_c *GetIdsSensorsController) GetIds(c *gin.Context) {
 		return
 	}
 
-	sensors := gids_c.app.Run(int(id_place))
+	sensors, devices := gids_c.app.Run(int(id_place))
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
@@ -51,6 +51,7 @@ func (gids_c *GetIdsSensorsController) GetIds(c *gin.Context) {
 			"self": "http://localhost:8080/users/",
 		},
 		"Sensors": sensors,
+		"Devices": devices,
 	})
 
 
