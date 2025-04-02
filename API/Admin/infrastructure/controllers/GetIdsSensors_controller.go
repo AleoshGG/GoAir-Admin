@@ -52,6 +52,7 @@ func (gids_c *GetIdsSensorsController) GetIds(c *gin.Context) {
 		},
 		"Sensors": sensors,
 		"Devices": devices,
+		"id_place": id_place,
 	})
 
 
