@@ -96,7 +96,6 @@ func (postgres *PostgreSQL) CreatePlace(name string, id_user int, id_application
 		return 0, err
 	}
 
-	defer postgres.conn.DB.Close()
 
 	return id, nil
 }
@@ -272,7 +271,6 @@ func (postgres *PostgreSQL) DeletePlace(id_place int) (uint, error) {
 	
 	_, err := postgres.conn.DB.Exec(query, id_place)
 
-	defer postgres.conn.DB.Close()
 
 	if err != nil {
 		fmt.Println("Error al ejecutar la consultaF: %v", err)
@@ -373,7 +371,6 @@ func (postgres *PostgreSQL) ConfirmInstallation(id_application int) (error) {
         return fmt.Errorf("ningún registro actualizado (id_application %d no existe)", id_application)
     }
 
-	defer postgres.conn.DB.Close()
 	
 	return nil
 }
