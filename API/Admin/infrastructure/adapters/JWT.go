@@ -22,7 +22,7 @@ func (j *JWT) CreateJWT(admin entities.Admin) (string, error) {
 		Password: admin.Password,
 		Email:   admin.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)), // Expira en 2 horas
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 2)), // Expira en 2 horas
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   fmt.Sprintf("%s", admin.Email),
 		},
