@@ -356,21 +356,41 @@ func (postgres *PostgreSQL) GetAllApplications() ([]entities.AllApplications) {
 	return applications
 }
 
-func (postgres *PostgreSQL) ConfirmInstallation(id_application int) (error) {
-	query := "DELETE FROM applications WHERE id_application = $1"
+func (postgres *PostgreSQL) ConfirmInstallation(id_application int) (int, error) {
+	query := "SELECT id_user FROM applications WHERE id_application = $1"	
+
+	var id_user int 
+
+	rows, err := postgres.conn.FetchRows(query, id_application)
+	if err != nil {
+		fmt.Errorf("error al ejecutar la consulta: %w", err)
+		return 0, err
+	}
+	
+	if !rows.Next() {
+        fmt.Println("No se pudieron obtener los datos.")
+        return 0, err
+    }
+
+	if err := rows.Scan(&id_user); err != nil {
+		fmt.Errorf("error al escanear el usuario: %w", err)
+        return 0, err
+	}
+	
+	query = "DELETE FROM applications WHERE id_application = $1"
 	
 	result, err := postgres.conn.DB.Exec(query, id_application)
 
 	if err != nil {
 		fmt.Println("Error al ejecutar la consultaF: %v", err)
-		return err
+		return 0, err
 	}
 
 	rowsAffected, _ := result.RowsAffected()
     if rowsAffected == 0 {
-        return fmt.Errorf("ningún registro actualizado (id_application %d no existe)", id_application)
+        return 0, fmt.Errorf("ningún registro actualizado (id_application %d no existe)", id_application)
     }
 
 	
-	return nil
+	return id_user, nil
 }

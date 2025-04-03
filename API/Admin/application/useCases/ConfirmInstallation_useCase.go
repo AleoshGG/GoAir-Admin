@@ -10,6 +10,6 @@ func NewConfirmInstallation(db repository.IAdmin) *ConfirmInstallation {
 	return &ConfirmInstallation{db: db}
 }
 
-func (uc *ConfirmInstallation) Run(id_application int) (error) {
+func (uc *ConfirmInstallation) Run(id_application int) (int, error) {
 	return uc.db.ConfirmInstallation(id_application)
 }

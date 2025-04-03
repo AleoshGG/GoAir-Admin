@@ -12,5 +12,5 @@ type IAdmin interface {
 	DeletePlace(id_place int) (uint, error)
 	GetApplicationByUser(id_user int) []entities.Application
 	GetAllApplications() []entities.AllApplications
-	ConfirmInstallation(id_application int) (error)
+	ConfirmInstallation(id_application int) (int, error)
 }

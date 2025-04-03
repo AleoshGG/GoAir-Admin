@@ -13,14 +13,17 @@ import (
 type ConfirmInstallationController struct {
 	app  *usecases.ConfirmInstallation
 	auth *services.Auth
+	brocker *services.Brocker
 }
 
 func NewConfirmInstallationController() *ConfirmInstallationController {
 	postgres := infrastructure.GetPostgreSQL()
 	jwt := infrastructure.GetJWT()
+	rabbitmq := infrastructure.GetRabbitMQ()
 	app := usecases.NewConfirmInstallation(postgres)
 	auth := services.NewAuth(jwt)
-	return &ConfirmInstallationController{app: app, auth: auth}
+	brocker := services.NewBrocker(rabbitmq)
+	return &ConfirmInstallationController{app: app, auth: auth, brocker: brocker}
 }
 
 func (ci_c *ConfirmInstallationController) ConfirmInstallation(c *gin.Context) {
@@ -42,11 +45,12 @@ func (ci_c *ConfirmInstallationController) ConfirmInstallation(c *gin.Context) {
 		return
 	}
 
-	err = ci_c.app.Run(int(id_application))
+	id_user, err := ci_c.app.Run(int(id_application))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No se puedo actualizar", "error:":err})
 		return
 	}
+	ci_c.brocker.Run(id_user)
 
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
