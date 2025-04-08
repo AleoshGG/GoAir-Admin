@@ -281,7 +281,7 @@ func (postgres *PostgreSQL) DeletePlace(id_place int) (uint, error) {
 }
 
 func (postgres *PostgreSQL) GetApplicationByUser(id_user int) []entities.Application {
-	query := `SELECT * FROM applications WHERE id_user = $1 AND status_application != 'complete'`
+	query := `SELECT * FROM applications WHERE id_user = $1`
 
 	var applications []entities.Application
 

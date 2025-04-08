@@ -7,17 +7,20 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 )
 
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+var jwtSecret = []byte(os.Getenv("JWT_SECRET_ADMIN"))
 
 type JWT struct{}
 
 func NewJWT() *JWT {
+	godotenv.Load()
 	return &JWT{}
 }
 
 func (j *JWT) CreateJWT(admin entities.Admin) (string, error) {
+	fmt.Print(godotenv.UnmarshalBytes(jwtSecret))
 	claims := entities.Claims{
 		Password: admin.Password,
 		Email:   admin.Email,
@@ -33,6 +36,7 @@ func (j *JWT) CreateJWT(admin entities.Admin) (string, error) {
 }
 
 func (j *JWT) Auth(tokenString string) (entities.Claims, error) {
+	fmt.Print(godotenv.UnmarshalBytes(jwtSecret))
 	token, err := jwt.ParseWithClaims(tokenString, &entities.Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
