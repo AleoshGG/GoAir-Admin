@@ -376,6 +376,7 @@ func (postgres *PostgreSQL) ConfirmInstallation(id_application int) (int, error)
 		fmt.Errorf("error al escanear el usuario: %w", err)
         return 0, err
 	}
+	defer rows.Close()
 	
 	query = "DELETE FROM applications WHERE id_application = $1"
 	
